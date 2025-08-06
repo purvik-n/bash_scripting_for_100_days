@@ -1,0 +1,9 @@
+echo "Hello, World!"
+
+-n Option: No Trailing Newline
+echo -n "Hello,";echo " World!"
+-e Option: Enable Backslash Escapes
+echo -e "Hello\nWorld!"
+-E Option: Disable Backslash Escapes
+
+echo -E "Hello\nWorld!"
