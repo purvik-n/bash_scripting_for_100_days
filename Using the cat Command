@@ -1,0 +1,10 @@
+Using the cat Command
+cat my_file.txt
+-n Option: Number All Lines
+cat -n my_file.txt
+-b Option: Number Non-Blank Lines
+cat -b my_file.txt
+-s Option: Suppress Repeated Empty Lines
+cat -s my_file.txt
+-v Option: Show Non-Printing Characters
+cat -v my_file.txt
