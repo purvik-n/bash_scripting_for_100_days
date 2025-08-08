@@ -1,0 +1,7 @@
+GREP command search for a particular string/keyword from a file and print lines matching a pattern
+
+let there be a file name called user.csv in which it contains all the user details
+
+$$$$$$$ grep chandan user.csv
+
+now it lists the details of chandan in user.csv file
