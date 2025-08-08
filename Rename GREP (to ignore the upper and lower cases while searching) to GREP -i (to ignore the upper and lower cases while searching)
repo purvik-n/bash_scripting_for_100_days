@@ -1,0 +1,6 @@
+syntax
+      grep (keyword) -i file 
+
+grep -i purvik user.csv
+
+here the case doesnt matter its prints out the details of the user
