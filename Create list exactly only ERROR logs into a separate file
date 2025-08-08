@@ -1,0 +1,1 @@
+grep ERROR file.txt > error_logs.txt
