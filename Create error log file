@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Usage: ./p02_extract_error_logs.sh <logfile> [outputfile]
+# Default logfile: ./sample_system.log
+# Default outputfile: errors.log
+
+LOG="${1:-./sample_system.log}"
+OUT="${2:-errors.log}"
+
+# Check if the log file exists
+if [[ ! -f "$LOG" ]]; then
+  echo "Log file not found: $LOG"
+  exit 1
+fi
+
+# Extract all lines containing [ERROR]
+grep '\[ERROR\]' "$LOG" > "$OUT"
+
+echo "Wrote $OUT"
