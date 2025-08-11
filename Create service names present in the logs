@@ -1,0 +1,1 @@
+grep -oP '\(\K[^\)]+' sample_system.txt | sort -u
