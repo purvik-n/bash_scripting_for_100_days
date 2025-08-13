@@ -1,0 +1,5 @@
+cd $Home
+
+echo "i am chandan" . test.txt
+
+cat test.txt
