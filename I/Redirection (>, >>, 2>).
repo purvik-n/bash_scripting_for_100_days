@@ -1,0 +1,10 @@
+echo "Hello World" > greetings.txt
+Creates greetings.txt (if it doesn’t exist) and writes "Hello World" inside.
+
+If the file already has content, it overwrites it.
+
+echo "Hello Again" >> greetings.txt
+Adds "Hello Again" to the end of greetings.txt without deleting old content.
+
+ls non_existing_file 2> errors.txt
+ls will fail (file doesn’t exist) and the error will be written to errors.txt instead of showing on screen.
