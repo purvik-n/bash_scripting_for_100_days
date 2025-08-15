@@ -1,0 +1,9 @@
+1) cp notes.txt backup_notes.txt
+This makes a copy of notes.txt named backup_notes.txt in the same folder.
+
+2) cp -r project/ backup_project/
+-r (recursive) is needed to copy folders with their contents.
+
+Without -r, cp will not copy a directory.
+3) mv old_name.txt new_name.txt
+Changes the name of old_name.txt to new_name.txt in the same folder.
