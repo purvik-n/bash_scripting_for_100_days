@@ -1,0 +1,11 @@
+cat notes.txt
+Displays the full contents of notes.txt.
+
+cat -n file_name
+Adds line numbers to each line of the file.
+
+less big_log.txt
+You can scroll up and down without loading the whole file at once.
+
+more big_log.txt
+Similar to less, but limited navigation.
