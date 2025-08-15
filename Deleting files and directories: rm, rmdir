@@ -1,0 +1,15 @@
+rm notes.txt
+Deletes notes.txt from the current folder.
+
+rm -r folder_name
+-r (recursive) deletes the folder and everything inside it.
+
+rm -ri folder_name
+-i (interactive) asks for confirmation before deleting each file.
+
+
+rmdir old_folder
+Deletes old_folder only if it’s empty.
+
+rmdir -p parent/child
+-p removes the specified folder and its parent directories if they become empty.
