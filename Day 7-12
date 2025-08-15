@@ -1,0 +1,157 @@
+Day 7: I/O Redirection (>, >>, 2>)
+
+Concept: Redirecting output means sending it somewhere other than the terminal screen.
+
+> → Overwrite output to file
+
+echo "Hello World" > file.txt
+
+
+(Replaces file content with new text)
+
+>> → Append output to file
+
+echo "Another Line" >> file.txt
+
+
+(Adds to end without deleting old content)
+
+2> → Redirect errors
+
+ls no_file 2> errors.txt
+
+
+(Saves error message into errors.txt)
+
+Extra: Send both output and errors to same file:
+
+command > out.txt 2>&1
+
+Day 8: Piping (|)
+
+Concept: A pipe connects one command’s output directly into another command’s input — like passing water from one pipe into another.
+
+Example: Show only lines containing error in a log:
+
+cat logfile.txt | grep error
+
+
+Chaining multiple commands:
+
+ps aux | grep firefox | wc -l
+
+
+ps aux → show processes
+
+grep firefox → filter firefox
+
+wc -l → count the number of lines
+
+Day 9: Searching for Files with find
+
+Concept: find searches for files/folders based on name, size, date, permissions, etc.
+
+Search by name:
+
+find /home -name "notes.txt"
+
+
+Search by extension:
+
+find . -name "*.txt"
+
+
+Search for directories:
+
+find . -type d -name "backup"
+
+
+Run a command on found files:
+
+find . -name "*.log" -exec rm {} \;
+
+
+({} is replaced by each file found, \; ends the command)
+
+Day 10: Introduction to grep for Text Searching
+
+Concept: grep searches inside files for matching text patterns.
+
+Basic search:
+
+grep "hello" file.txt
+
+
+Case-insensitive:
+
+grep -i "hello" file.txt
+
+
+Search recursively in folder:
+
+grep -r "error" /var/log
+
+
+Show line numbers:
+
+grep -n "main" program.c
+
+Day 11: Wildcards and Globbing (*, ?, [])
+
+Concept: Wildcards match multiple files or characters.
+
+* → matches zero or more characters
+
+ls *.txt   # All .txt files
+
+
+? → matches exactly one character
+
+ls file?.txt   # file1.txt, fileA.txt but not file10.txt
+
+
+[abc] → matches any one character inside brackets
+
+ls file[123].txt   # file1.txt, file2.txt, file3.txt
+
+
+[a-z] → range match
+
+ls file[a-d].txt   # filea.txt, fileb.txt, filec.txt, filed.txt
+
+Day 12: File Permissions with chmod
+
+Concept: Every file/folder has permissions: read (r), write (w), and execute (x) for owner, group, and others.
+
+View permissions:
+
+ls -l
+
+
+Example output:
+
+-rwxr-x---
+
+
+First char: file type (- for file, d for directory)
+
+Next 3: Owner permissions
+
+Next 3: Group permissions
+
+Last 3: Others permissions
+
+Change permissions (symbolic mode):
+
+chmod u+x script.sh   # Add execute for user
+chmod g-w file.txt    # Remove write from group
+chmod o+r file.txt    # Add read for others
+
+
+Change permissions (numeric mode):
+
+Read = 4, Write = 2, Execute = 1
+
+Add them for each group:
+
+chmod 755 file.txt → rwx for owner (7), rx for group (5), rx for others (5)
