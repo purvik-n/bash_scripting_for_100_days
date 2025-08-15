@@ -1,0 +1,5 @@
+1) mkdir my_folder
+This creates a new folder named my_folder in your current location.
+
+2)touch notes.txt
+Creates an empty file called notes.txt in the current directory.
