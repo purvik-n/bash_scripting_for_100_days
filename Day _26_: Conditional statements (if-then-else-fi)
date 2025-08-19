@@ -1,0 +1,11 @@
+if [ condition ]; then
+  # commands if true
+else
+  # commands if false
+fi
+
+if [ -f "myfile.txt" ]; then
+  echo "File exists."
+else
+  echo "File does not exist."
+fi
