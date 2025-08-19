@@ -1,0 +1,16 @@
+if [ condition1 ]; then
+  # if condition1 true
+elif [ condition2 ]; then
+  # if condition2 true
+else
+  # if none true
+fi
+
+num=10
+if [ $num -gt 20 ]; then
+  echo "Greater than 20"
+elif [ $num -eq 10 ]; then
+  echo "Equal to 10"
+else
+  echo "Less than 10"
+fi
