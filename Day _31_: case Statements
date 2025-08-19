@@ -1,0 +1,20 @@
+case is useful for multiple-choice conditions.
+
+Syntax:
+
+case $variable in
+  pattern1) commands ;;
+  pattern2) commands ;;
+  *) default ;;
+esac
+
+
+Example:
+
+echo "Enter a fruit:"
+read fruit
+case $fruit in
+  apple) echo "You chose apple." ;;
+  banana) echo "You chose banana." ;;
+  *) echo "Unknown fruit." ;;
+esac
