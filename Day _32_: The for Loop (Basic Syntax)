@@ -1,0 +1,14 @@
+for loops allow iteration over lists.
+
+Syntax:
+
+for var in list; do
+  commands
+done
+
+
+Example:
+
+for i in 1 2 3 4 5; do
+  echo "Number: $i"
+done
