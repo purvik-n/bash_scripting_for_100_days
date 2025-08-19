@@ -1,0 +1,4 @@
+str="hello"
+if [ -n "$str" ]; then
+  echo "String is not empty"
+fi
