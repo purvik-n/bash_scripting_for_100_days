@@ -1,0 +1,13 @@
+-f file → True if file exists and is a regular file.
+
+-d dir → True if directory exists.
+
+-e file → True if file exists.
+
+-s file → True if file exists and not empty.
+
+Example:
+
+if [ -d "/etc" ]; then
+  echo "/etc directory exists"
+fi
