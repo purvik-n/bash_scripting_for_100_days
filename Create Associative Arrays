@@ -1,0 +1,19 @@
+#!/bin/bash
+# Declare associative array
+declare -A server_info
+# Assign values
+server_info["hostname"]="web-server-01"
+server_info["ip"]="192.168.1.100"
+server_info["os"]="Ubuntu 20.04"
+server_info["role"]="web"
+# Access values
+echo "Server: ${server_info["hostname"]}"
+echo "IP: ${server_info["ip"]}"
+# Get all keys
+echo "Keys: ${!server_info[@]}"
+# Get all values
+echo "Values: ${server_info[@]}"
+# Loop through associative array
+for key in"${!server_info[@]}"; do
+echo "$key: ${server_info[$key]}"
+done
