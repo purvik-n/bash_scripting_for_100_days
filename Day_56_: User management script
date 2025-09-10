@@ -1,0 +1,15 @@
+#!/bin/bash
+case $1 in
+  create)
+    sudo adduser $2
+    ;;
+  delete)
+    sudo deluser $2
+    ;;
+  list)
+    cut -d: -f1 /etc/passwd
+    ;;
+  *)
+    echo "Usage: $0 {create|delete|list} [username]"
+    ;;
+esac
