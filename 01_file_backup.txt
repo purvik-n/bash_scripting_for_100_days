@@ -1,5 +1,5 @@
 File Backup Script (tar.gz)
-Created: 2025-08-16 13:22:36
+Created: 2025-08-16 
 
 Getting Started (Beginner-friendly):
 Overview:
