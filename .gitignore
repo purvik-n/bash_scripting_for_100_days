@@ -1,7 +1,7 @@
 *.tar
 *.tar.*
 *.exe
-*.msi
+*.msii
 *.deb
 *.zip
 *.tgz
