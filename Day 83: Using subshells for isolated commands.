@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# --- Setup ---
+MAIN_DIR=$(pwd)
+MAIN_VAR="Original Value"
+TEMP_DIR="/tmp/test_dir"
+
+mkdir -p "$TEMP_DIR"
+
+echo "--- Initial State ---"
+echo "Main Script Directory: $MAIN_DIR"
+echo "Main Script Variable: $MAIN_VAR"
+echo "-----------------------------------"
+
+# --- 1. Commands Grouped in a Subshell () ---
+echo "--- Running Subshell Commands ---"
+(
+    echo "  [Subshell] Current directory before CD: $(pwd)"
+    
+    # Change directory (temporary change)
+    cd "$TEMP_DIR"
+    echo "  [Subshell] Directory inside subshell: $(pwd)"
+    
+    # Change variable (temporary change)
+    MAIN_VAR="Subshell Changed Value"
+    echo "  [Subshell] Variable inside subshell: $MAIN_VAR"
+)
+echo "-----------------------------------"
+
+
+# --- 2. Final State Check ---
+echo "--- Final State Check ---"
+echo "Main Script Directory: $(pwd)"
+echo "Main Script Variable: $MAIN_VAR"
+
+# Cleanup
+rmdir "$TEMP_DIR"
