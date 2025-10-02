@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# --- Data Setup (Simulating a CSV file) ---
+CSV_FILE="/tmp/employee_data.csv"
+cat << EOF > "$CSV_FILE"
+employee_id,first_name,last_name,department,salary
+101,Alice,Smith,HR,65000
+102,Bob,Jones,IT,75000
+103,Charlie,Davis,Sales,60000
+EOF
+
+echo "--- Processing CSV Data with IFS=, ---"
+echo "ID | Full Name | Department"
+echo "------------------------------"
+
+# Use the < redirection to feed the file into the while loop
+# Tail -n +2 skips the header line
+tail -n +2 "$CSV_FILE" | while IFS=, read -r ID FNAME LNAME DEPT SALARY; do
+
+    # Check if the line is not empty (good practice)
+    if [ ! -z "$ID" ]; then
+        
+        # Output the formatted data
+        printf "%-2s | %s %s | %s\n" "$ID" "$FNAME" "$LNAME" "$DEPT"
+        
+        # Example of conditional logic in pure Bash
+        if [ "$DEPT" == "IT" ]; then
+            echo "   [Action: Sending IT user credentials...]"
+        fi
+    fi
+
+done
+
+echo "------------------------------"
+echo "Data processing complete."
+
+# Cleanup
+rm "$CSV_FILE"
