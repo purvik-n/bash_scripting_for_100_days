@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# --- Configuration ---
+IMAGE_NAME="my-web-app"
+CONTAINER_NAME="web-instance"
+DOCKERFILE_DIR="./app_build"
+PORT=8080
+
+# --- Setup: Create a simulated Dockerfile and content ---
+mkdir -p "$DOCKERFILE_DIR"
+cat << EOF > "$DOCKERFILE_DIR/Dockerfile"
+# Simulated Dockerfile
+FROM alpine:latest
+CMD echo "Web app started successfully on port 8080."
+EOF
+
+# --- Function to check if container is running ---
+is_container_running() {
+    docker ps -q --filter name="$1"
+}
+
+# --- Main Script Logic ---
+echo "--- Docker Management Script ---"
+
+# 1. Clean up old container if it exists
+if docker ps -a -q --filter name="$CONTAINER_NAME" | grep -q .; then
+    echo "Stopping and removing old container: $CONTAINER_NAME"
+    docker stop "$CONTAINER_NAME" &> /dev/null
+    docker rm "$CONTAINER_NAME" &> /dev/null
+fi
+
+# 2. Build the Docker image
+echo "Building image $IMAGE_NAME..."
+docker build -t "$IMAGE_NAME" "$DOCKERFILE_DIR"
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Docker image build failed."
+    exit 1
+fi
+
+# 3. Run the container
+echo "Running container $CONTAINER_NAME, exposing port $PORT..."
+
+# -d: Detached mode (background)
+# -p: Port mapping (local:container)
+# --name: Assign a specific name
+docker run -d -p $PORT:8080 --name "$CONTAINER_NAME" "$IMAGE_NAME"
+
+if [ $? -eq 0 ]; then
+    echo "SUCCESS: Container is running."
+    echo "Container ID: $(docker ps -q --filter name=$CONTAINER_NAME)"
+    echo "Run 'docker logs $CONTAINER_NAME' to see the output."
+else
+    echo "FAILURE: Could not start container."
+fi
+
+# 4. Cleanup (optional: remove simulated files)
+rm -rf "$DOCKERFILE_DIR"
