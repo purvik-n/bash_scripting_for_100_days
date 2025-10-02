@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# --- Configuration ---
+# Define the standard directory structure to be created
+DIRS=("src" "tests" "docs" "bin" "config")
+# Define boilerplate files
+FILES=("README.md" "LICENSE" "config/settings.conf")
+
+# --- Input Validation ---
+if [ -z "$1" ]; then
+    echo "Usage: $0 <ProjectName>"
+    exit 1
+fi
+
+PROJECT_NAME="$1"
+PROJECT_ROOT="$HOME/Projects/$PROJECT_NAME"
+
+# Check if project already exists
+if [ -d "$PROJECT_ROOT" ]; then
+    echo "ERROR: Project directory '$PROJECT_ROOT' already exists. Aborting."
+    exit 1
+fi
+
+echo "--- Creating new project: $PROJECT_NAME ---"
+
+# 1. Create the main directory and subdirectories in one command
+echo "Creating directory structure..."
+mkdir -p "$PROJECT_ROOT"
+if [ $? -ne 0 ]; then
+    echo "ERROR: Could not create root directory. Check permissions."
+    exit 1
+fi
+
+# Use xargs to efficiently create all subdirectories
+# Note: The DIRS array will ensure the subdirectories are created inside PROJECT_ROOT
+for dir in "${DIRS[@]}"; do
+    mkdir -p "$PROJECT_ROOT/$dir"
+done
+
+# 2. Create boilerplate files
+echo "Creating boilerplate files..."
+cd "$PROJECT_ROOT" || exit 1
+
+# Create empty files
+for file in "${FILES[@]}"; do
+    touch "$file"
+    echo "  - Created: $file"
+done
+
+# 3. Add content to README
+cat << EOF > "README.md"
+# $PROJECT_NAME
+
+## Overview
+A new project created automatically on $(date).
+
+## Setup
+1. Clone the repository.
+2. Run \`./bin/setup.sh\`
+EOF
+
+echo "Project structure successfully created at $PROJECT_ROOT."
+ls -F "$PROJECT_ROOT"
