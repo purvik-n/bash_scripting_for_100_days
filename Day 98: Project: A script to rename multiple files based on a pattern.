@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# --- Configuration ---
+TARGET_EXT="txt"
+PREFIX="doc-"
+DRY_RUN=true
+COUNTER=1
+
+# --- Setup: Create dummy files ---
+for i in {1..5}; do touch file_backup_$i.$TARGET_EXT; done
+echo "Created 5 files for demonstration."
+
+# --- Argument Handling ---
+if [ "$1" == "--rename" ]; then
+    DRY_RUN=false
+    echo "--- !!! CAUTION !!! Running in LIVE RENAME mode. ---"
+else
+    echo "--- Running in DRY-RUN mode (NO actual files will be renamed). ---"
+    echo "    Re-run with the '--rename' argument to perform actual rename."
+fi
+
+# --- Main Renaming Loop ---
+# Use a wildcard to generate the list of files to process
+for old_name in *."$TARGET_EXT"; do
+    
+    # Check if the file is a regular file (prevents errors if no files match)
+    [ -f "$old_name" ] || continue
+    
+    # Generate the new name with sequential prefix
+    # Use printf for consistent two-digit padding (01, 02, etc.)
+    PADDED_COUNT=$(printf "%02d" $COUNTER)
+    
+    # Remove the .txt suffix to place the new name before it
+    BASE_NAME=${old_name%.*} 
+    
+    NEW_NAME="${PREFIX}${PADDED_COUNT}_${old_name}"
+    
+    if $DRY_RUN; then
+        echo "[DRY-RUN] $old_name -> $NEW_NAME"
+    else
+        mv "$old_name" "$NEW_NAME"
+        if [ $? -eq 0 ]; then
+            echo "[RENAMED] $old_name -> $NEW_NAME"
+        else
+            echo "[ERROR] Failed to rename $old_name."
+        fi
+    fi
+    
+    COUNTER=$((COUNTER + 1))
+done
+
+echo "--- Renaming Finished. ---"
