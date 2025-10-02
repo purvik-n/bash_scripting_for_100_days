@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# --- Data Setup ---
+FULL_PATH="/home/user/documents/report.2024.log.txt"
+DATA_LINE="Name:Alice Smith | ID:101 | Status:Active"
+STRING_VAR="0123456789ABCDEF"
+
+echo "Original Path: $FULL_PATH"
+echo "Original Line: $DATA_LINE"
+echo "Original String: $STRING_VAR"
+echo "--------------------------------------------------------"
+
+# --- 1. Substring Extraction and Length ---
+
+# Get length of the string
+LENGTH=${#FULL_PATH}
+echo "1a. Length of Path: $LENGTH" # Output: 44
+
+# Extract a substring: Start at character 10 (0-indexed), take 5 characters
+SLICE_1=${STRING_VAR:10:5}
+echo "1b. Slicing (10, 5 chars): $SLICE_1" # Output: ABCDE
+
+# --- 2. Removing Prefixes (Path to Filename) ---
+
+# Remove the longest prefix matching any characters followed by a slash (/*/)
+# This effectively gives you the filename.
+FILENAME_ONLY=${FULL_PATH##*/}
+echo "2a. Filename Only (##*/): $FILENAME_ONLY" # Output: report.2024.log.txt
+
+# Remove the shortest prefix matching the directory path
+DIR_REM=${FULL_PATH#*/documents}
+echo "2b. Remove Shortest Prefix (#*/documents): $DIR_REM" # Output: /report.2024.log.txt
+
+# --- 3. Removing Suffixes (Removing Extensions) ---
+
+# Remove the shortest suffix matching the last dot and characters (.*)
+# This removes the final extension (.txt)
+NO_EXT_SHORT=${FULL_PATH%.*}
+echo "3a. No Last Extension (% . *): $NO_EXT_SHORT" # Output: /home/user/documents/report.2024.log
+
+# Remove the longest suffix matching any dot and characters (.*)
+# This removes ALL extensions (.2024.log.txt)
+NO_EXT_LONG=${FULL_PATH%%.*}
+echo "3b. No All Extensions (%% . *): $NO_EXT_LONG" # Output: /home/user/documents/report
+
+# --- 4. Search and Replace ---
+
+# Replace the first occurrence of " " with "_"
+REPLACE_FIRST=${DATA_LINE/ /_}
+echo "4a. Replace First Space (/ /_): $REPLACE_FIRST" # Output: Name:Alice_Smith | ID:101 | Status:Active
+
+# Replace all occurrences of " " with "_"
+REPLACE_ALL=${DATA_LINE// /_}
+echo "4b. Replace All Spaces (// /_): $REPLACE_ALL" # Output: Name:Alice_Smith_|_ID:101_|_Status:Active
