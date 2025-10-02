@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# --- Configuration ---
+LOG_DIRS=("/var/log" "/tmp" "/var/tmp")
+OLD_DAYS=+7  # Files older than 7 days (+7)
+DRY_RUN=true # Default to safe mode
+
+# Check for root privilege
+if [ "$EUID" -ne 0 ]; then
+    echo "ERROR: Please run this script with sudo or as root to access necessary directories."
+    exit 1
+fi
+
+# --- Function to Handle Command-line Argument ---
+if [ "$1" == "--delete" ]; then
+    DRY_RUN=false
+    echo "--- !!! CAUTION !!! Running in LIVE DELETION mode. ---"
+else
+    echo "--- Running in DRY-RUN mode (NO files will be deleted). ---"
+    echo "    Re-run with the '--delete' argument to perform actual deletion."
+fi
+
+# --- Function to Execute Cleanup ---
+perform_cleanup() {
+    local target_dir=$1
+    echo "Searching for files older than ${OLD_DAYS:1} days in: $target_dir"
+    
+    # -type f: target only files (not directories)
+    # -mtime +N: file's data was last modified N*24 hours ago
+    
+    if $DRY_RUN; then
+        # Dry-run: print the files found
+        find "$target_dir" -type f -mtime "$OLD_DAYS" -print
+    else
+        # Live-run: execute the deletion
+        find "$target_dir" -type f -mtime "$OLD_DAYS" -delete
+        echo "Cleanup complete for $target_dir."
+    fi
+    echo "--------------------------------------------------------"
+}
+
+# --- Main Execution ---
+for dir in "${LOG_DIRS[@]}"; do
+    perform_cleanup "$dir"
+done
+
+echo "Script finished."
