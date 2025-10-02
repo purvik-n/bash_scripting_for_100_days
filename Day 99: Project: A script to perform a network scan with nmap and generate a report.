@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# --- Configuration ---
+NMAP_OPTS="-sV -F" # -sV: service version detection, -F: fast scan (top 1000 ports)
+REPORT_FILE="scan_report_$(date +%Y%m%d_%H%M).txt"
+
+# --- Input Validation ---
+if [ -z "$1" ]; then
+    echo "Usage: $0 <Target IP or Hostname>"
+    exit 1
+fi
+
+TARGET_HOST="$1"
+
+# Check if nmap exists
+if ! command -v nmap &> /dev/null; then
+    echo "ERROR: nmap tool not found. Please install it (e.g., sudo apt install nmap)."
+    exit 1
+fi
+
+# --- Main Execution ---
+echo "--- Starting Nmap Scan on $TARGET_HOST ---"
+
+# 1. Execute nmap and capture output
+# Use -oG (Grepable format) for easy parsing
+NMAP_OUTPUT=$(nmap $NMAP_OPTS -oG - "$TARGET_HOST")
+SCAN_STATUS=$?
+
+if [ "$SCAN_STATUS" -ne 0 ]; then
+    echo "ERROR: Nmap scan failed. Check the target or permissions."
+    echo "Raw Nmap Output:"
+    echo "$NMAP_OUTPUT"
+    exit 1
+fi
+
+# 2. Generate the report
+echo "Report for Host: $TARGET_HOST" > "$REPORT_FILE"
+echo "Scan Command: nmap $NMAP_OPTS $TARGET_HOST" >> "$REPORT_FILE"
+echo "Scan Time: $(date)" >> "$REPORT_FILE"
+echo "--------------------------------------------------------" >> "$REPORT_FILE"
+echo "OPEN PORTS AND SERVICES:" >> "$REPORT_FILE"
+
+# Parse the grepable output (ports are listed after 'Ports: ')
+echo "$NMAP_OUTPUT" | grep 'Ports:' | awk -F'Ports:' '{print $2}' | sed 's/\t//g' | awk '
+{
+    # $1 is the status line, split by commas
+    for (i=1; i<=NF; i++) {
+        # Split each service line by /
+        split($i, a, "/");
+        
+        # a[1]=port, a[2]=status, a[7]=service
+        if (a[2] == "open") {
+            printf "%-6s / %-10s / %s\n", a[1], a[7], a[2]
+        }
+    }
+}' | sort -n | grep -v 'Host is down' >> "$REPORT_FILE"
+
+echo "--------------------------------------------------------" >> "$REPORT_FILE"
+echo "Report saved to $REPORT_FILE"
+cat "$REPORT_FILE"
