@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# --- Configuration ---
+REPORT_FILE="/tmp/health_report_$(date +%Y%m%d_%H%M).log"
+CPU_THRESHOLD=90
+DISK_THRESHOLD=90
+SERVICE_TO_CHECK="ssh" # Critical service
+
+GLOBAL_STATUS=0 # 0=PASS, 1=FAIL
+
+# --- Utility Function ---
+report_status() {
+    local check_name="$1"
+    local result="$2"
+    local message="$3"
+    
+    if [ "$result" == "FAIL" ]; then
+        GLOBAL_STATUS=1
+    fi
+    printf "%-20s : %-10s : %s\n" "$check_name" "$result" "$message" >> "$REPORT_FILE"
+}
+
+# --- 1. Disk Check ---
+check_disk() {
+    DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+    if [ "$DISK_USAGE" -ge "$DISK_THRESHOLD" ]; then
+        report_status "Disk Usage (/)" "FAIL" "Usage at ${DISK_USAGE}%, Threshold: $DISK_THRESHOLD%"
+    else
+        report_status "Disk Usage (/)" "PASS" "Usage at ${DISK_USAGE}%"
+    fi
+}
+
+# --- 2. Load Average Check (Approx. CPU) ---
+check_load() {
+    # Get 1-minute load average (second field of load average output)
+    LOAD_AVG=$(uptime | awk -F'load average: ' '{print $2}' | cut -d',' -f1 | tr -d ' ')
+    # Simple check: Load avg > number of CPU cores * threshold (e.g., 2 cores * 0.9)
+    # Using a simple threshold check here for demonstration:
+    if (( $(echo "$LOAD_AVG > 5.0" | bc -l) )); then
+        report_status "CPU Load Avg" "FAIL" "Load avg is $LOAD_AVG. System is strained."
+    else
+        report_status "CPU Load Avg" "PASS" "Load avg is $LOAD_AVG."
+    fi
+}
+
+# --- 3. Critical Service Check ---
+check_service() {
+    if systemctl is-active --quiet "$SERVICE_TO_CHECK"; then
+        report_status "$SERVICE_TO_CHECK Status" "PASS" "Service is active and running."
+    else
+        report_status "$SERVICE_TO_CHECK Status" "FAIL" "Service is inactive or failed!"
+    fi
+}
+
+# --- 4. Network Connectivity Check ---
+check_network() {
+    if ping -c 1 8.8.8.8 &> /dev/null; then
+        report_status "Network Check (8.8.8.8)" "PASS" "External ping successful."
+    else
+        report_status "Network Check (8.8.8.8)" "FAIL" "External ping failed. Network issue."
+    fi
+}
+
+# --- Main Execution ---
+echo "--- SYSTEM HEALTH REPORT ---" > "$REPORT_FILE"
+echo "Generated: $(date)" >> "$REPORT_FILE"
+echo "--------------------------------------------------------" >> "$REPORT_FILE"
+
+check_disk
+check_load
+check_service
+check_network
+
+echo "" >> "$REPORT_FILE"
+echo "--------------------------------------------------------" >> "$REPORT_FILE"
+
+# --- Final Summary ---
+if [ "$GLOBAL_STATUS" -eq 0 ]; then
+    echo "OVERALL STATUS: PASS" >> "$REPORT_FILE"
+    echo "System is healthy. Report saved to $REPORT_FILE"
+else
+    echo "OVERALL STATUS: FAIL" >> "$REPORT_FILE"
+    echo "CRITICAL: System health check FAILED. Review $REPORT_FILE immediately!"
+fi
+cat "$REPORT_FILE"
