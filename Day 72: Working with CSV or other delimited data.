@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# --- Data Setup (Simulating a colon-delimited file) ---
+DATA_FILE="/tmp/user_data.txt"
+cat << EOF > "$DATA_FILE"
+user_id:username:department:status
+101:alice:hr:active
+102:bob:it:inactive
+103:charlie:it:active
+104:david:sales:active
+EOF
+
+DELIMITER=":"
+
+echo "--- 1. Extracting only Usernames using 'cut' ---"
+# -d $DELIMITER: specifies the colon as the delimiter
+# -f 2: extracts the second field (username)
+# --complement: excludes the header line (1st field is 'user_id')
+tail -n +2 "$DATA_FILE" | cut -d "$DELIMITER" -f 2
+echo "------------------------------------------------"
+
+echo "--- 2. Finding all 'active' users in 'it' using 'awk' ---"
+# FS=DELIMITER: tells awk to use the colon as the field separator
+# $4 == "active" && $3 == "it": the conditional logic
+# {print $2, "in", $3}: the action (print username and department)
+
+tail -n +2 "$DATA_FILE" | awk -F "$DELIMITER" '
+    $4 == "active" && $3 == "it" {
+        print "Active IT User:", $2
+    }'
+echo "------------------------------------------------"
+
+echo "--- 3. Counting total active users using 'awk' ---"
+tail -n +2 "$DATA_FILE" | awk -F "$DELIMITER" '
+    $4 == "active" {
+        count++
+    }
+    END {
+        print "Total Active Users:", count
+    }'
+
+# Cleanup
+rm "$DATA_FILE"
