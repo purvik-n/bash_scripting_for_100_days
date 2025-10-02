@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# --- Configuration ---
+SORT_COLUMN=4  # 4 is %CPU, 5 is %MEM (based on ps aux output fields)
+TOP_N=5
+MODE="Memory"
+
+# Argument handling to select CPU or MEM mode
+if [ "$1" == "cpu" ]; then
+    SORT_COLUMN=3
+    MODE="CPU"
+elif [ "$1" == "mem" ]; then
+    SORT_COLUMN=4
+    MODE="Memory"
+elif [ ! -z "$1" ]; then
+    echo "Usage: $0 {cpu | mem} (Default: mem)"
+    exit 1
+fi
+
+echo "--- Top $TOP_N Processes by $MODE Usage ---"
+
+# 1. Get all process info (aux)
+# 2. Pipe to tail -n +2 to remove the header
+# 3. Sort numerically (-n) by the target column (-k)
+# 4. Pipe to head to get the top N lines
+# 5. Pipe to awk to clean up and format the output
+
+ps aux | tail -n +2 | sort -rnk "$SORT_COLUMN" | head -n "$TOP_N" | awk -v mode="$MODE" '
+{
+    # Print the column corresponding to the mode, followed by the user and command
+    if (mode == "Memory") {
+        # Fields: $4=%MEM, $1=USER, $11=COMMAND
+        printf "%-8s %-15s %s\n", $4, $1, $11
+    } else {
+        # Fields: $3=%CPU, $1=USER, $11=COMMAND
+        printf "%-8s %-15s %s\n", $3, $1, $11
+    }
+}' | awk '{
+    # Final cleanup to add column headers
+    if (NR == 1) {
+        print "USAGE%   USER            COMMAND"
+        print "----------------------------------------"
+    }
+    print $0
+}'
+
+echo "----------------------------------------"
