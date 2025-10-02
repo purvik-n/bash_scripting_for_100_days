@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# --- Configuration ---
+TARGET_URL="https://www.google.com"  # The website to monitor
+ALERT_EMAIL="admin@example.com"      # Recipient for the alert
+EXPECTED_CODE="200"
+LOG_FILE="/tmp/website_monitor.log"
+FAIL_COUNT=0
+
+# --- Function to Send Alert ---
+send_alert() {
+    local subject="$1"
+    local message="$2"
+    echo -e "$message" | mail -s "$subject" "$ALERT_EMAIL"
+    echo "$(date) ALERT SENT: $subject" >> "$LOG_FILE"
+}
+
+# --- Health Check ---
+echo "$(date) Starting health check for $TARGET_URL..." >> "$LOG_FILE"
+
+# -s: Silent mode. 
+# -o /dev/null: Discard the body content.
+# -w "%{http_code}": Write ONLY the status code to standard output.
+HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$TARGET_URL")
+CURL_STATUS=$?
+
+echo "HTTP Status Code: $HTTP_CODE (Curl Exit: $CURL_STATUS)" >> "$LOG_FILE"
+
+# --- Analysis ---
+if [ "$CURL_STATUS" -ne 0 ]; then
+    FAIL_REASON="CURL connection failed with error code $CURL_STATUS."
+    FAIL_COUNT=1
+elif [ "$HTTP_CODE" != "$EXPECTED_CODE" ]; then
+    FAIL_REASON="Received unexpected HTTP code: $HTTP_CODE."
+    FAIL_COUNT=1
+fi
+
+# --- Notification ---
+if [ "$FAIL_COUNT" -eq 1 ]; then
+    ALERT_SUBJECT="CRITICAL: Website $TARGET_URL is DOWN!"
+    ALERT_MESSAGE="The website check failed at $(date).\n\nDetails:\n$FAIL_REASON\n\nCheck the server immediately."
+    send_alert "$ALERT_SUBJECT" "$ALERT_MESSAGE"
+    
+    # Exit with non-zero status to signal cron failure
+    exit 1
+else
+    echo "$(date) SUCCESS: Website is responding with $HTTP_CODE." >> "$LOG_FILE"
+    exit 0
+fi
