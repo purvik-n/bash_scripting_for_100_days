@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# --- Configuration Variables ---
+USER_ID="alpha101"
+USER_NAME="Bash Script"
+IS_ADMIN="true"
+
+# --- 1. Generating JSON Payload using jq ---
+echo "--- 1. Generating JSON Payload ---"
+
+# Use jq with --arg and --argjson to safely inject Bash variables.
+# .data is set to the result of creating a new object {}.
+JSON_PAYLOAD=$(
+    jq -n \
+        --arg user "$USER_NAME" \
+        --argjson is_admin "$IS_ADMIN" \
+        '{
+            "user": $user,
+            "id": "USR-101",
+            "metadata": {
+                "created_by": "BashScript",
+                "is_admin": $is_admin
+            }
+        }'
+)
+
+echo "Generated JSON:"
+echo "$JSON_PAYLOAD"
+echo "----------------------------------------"
+
+# --- 2. Parsing and Extracting Data ---
+echo "--- 2. Parsing Data from Payload ---"
+
+# Extract the user name and the admin status separately
+PARSED_USER=$(echo "$JSON_PAYLOAD" | jq -r '.user')
+PARSED_ADMIN=$(echo "$JSON_PAYLOAD" | jq -r '.metadata.is_admin')
+
+echo "Extracted User: $PARSED_USER"
+echo "Is Admin: $PARSED_ADMIN"
