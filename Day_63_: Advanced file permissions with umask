@@ -1,0 +1,34 @@
+#!/bin/bash
+
+LOG_FILE="umask_results.log"
+echo "Umask Demonstration" > $LOG_FILE
+echo "-------------------" >> $LOG_FILE
+
+# 1. Check current umask
+CURRENT_UMASK=$(umask)
+echo "1. Current umask: $CURRENT_UMASK" >> $LOG_FILE
+mkdir D_default && touch F_default
+ls -ld D_default F_default >> $LOG_FILE
+rm -rf D_default F_default
+
+echo "" >> $LOG_FILE
+
+# 2. Set a strict umask (no access for Group or Other)
+echo "2. Setting umask to 077 (Owner-only access)" >> $LOG_FILE
+umask 0077
+
+echo "New umask: $(umask)" >> $LOG_FILE
+mkdir D_strict && touch F_strict
+
+# Calculate expected permissions:
+# Directory: 777 - 077 = 700 (rwx------)
+# File:      666 - 077 = 600 (rw-------)
+
+ls -ld D_strict F_strict >> $LOG_FILE
+
+# Reset umask (optional, but good practice)
+umask "$CURRENT_UMASK"
+rm -rf D_strict F_strict
+
+echo "Results saved to $LOG_FILE"
+cat $LOG_FILE
