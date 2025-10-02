@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# --- Configuration ---
+TARGET_DIR="data_files"
+HASH_FILE="$TARGET_DIR/checksums.sha256"
+FILE_PATTERN="*.log"
+
+# --- Setup: Create a directory and some test files ---
+mkdir -p "$TARGET_DIR"
+touch "$TARGET_DIR/app.log"
+echo "Initial content" > "$TARGET_DIR/server.log"
+
+echo "--- 1. Generating Checksums ---"
+
+# -b: Read in binary mode (though often not needed, it's safer for hashes)
+# >: Overwrites the hash file
+sha256sum "$TARGET_DIR/$FILE_PATTERN" > "$HASH_FILE"
+
+if [ $? -eq 0 ]; then
+    echo "SUCCESS: Checksums generated and saved to $HASH_FILE."
+else
+    echo "FAILURE: Could not generate checksums."
+    exit 1
+fi
+
+echo ""
+echo "--- Verification Test: NO Change (Expected: OK) ---"
+# -c: Check flag. Reads the hash file and re-calculates/compares hashes.
+sha256sum -c "$HASH_FILE"
+
+echo ""
+echo "--- Simulating Corruption: Modifying a file ---"
+echo "Malicious content" >> "$TARGET_DIR/server.log"
+echo "File 'server.log' has been modified."
+
+echo ""
+echo "--- Verification Test: WITH Change (Expected: FAILED) ---"
+
+sha256sum -c "$HASH_FILE"
+
+# Clean up test files
+rm -rf "$TARGET_DIR"
