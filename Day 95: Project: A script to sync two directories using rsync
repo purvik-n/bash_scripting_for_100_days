@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# --- Configuration ---
+SOURCE_DIR="$HOME/SourceData/"
+DEST_DIR="$HOME/BackupData/"
+LOG_FILE="/tmp/rsync_sync.log"
+
+# Default to dry run
+DRY_RUN_FLAG="--dry-run"
+
+# --- Setup: Create dummy directories and files for testing ---
+mkdir -p "$SOURCE_DIR" "$DEST_DIR"
+touch "$SOURCE_DIR/file_a.txt"
+touch "$SOURCE_DIR/file_b.txt"
+touch "$DEST_DIR/file_a.txt"  # Exists in both
+touch "$DEST_DIR/file_c.txt"  # Exists only in destination (will be deleted in sync)
+echo "content" > "$SOURCE_DIR/changed.txt"
+echo "old content" > "$DEST_DIR/changed.txt"
+sleep 1 # Ensure timestamps differ
+echo "new content" > "$SOURCE_DIR/changed.txt"
+
+# --- Function to Handle Command-line Argument ---
+if [ "$1" == "--sync" ]; then
+    DRY_RUN_FLAG=""
+    echo "--- !!! CAUTION !!! Running in LIVE SYNCHRONIZATION mode. ---"
+else
+    echo "--- Running in DRY-RUN mode (NO actual changes will be made). ---"
+    echo "    Re-run with the '--sync' argument to perform actual synchronization."
+fi
+
+# --- Rsync Command ---
+echo "Starting synchronization from $SOURCE_DIR to $DEST_DIR..."
+
+# -a: Archive mode (recursive, preserve permissions, times, owner, group)
+# -v: Verbose
+# --delete: Delete extraneous files from dest dirs (CRUCIAL for true sync)
+rsync $DRY_RUN_FLAG -av --delete "$SOURCE_DIR" "$DEST_DIR" 2>&1 | tee "$LOG_FILE"
+
+if [ $? -eq 0 ]; then
+    echo "SUCCESS: Rsync command finished."
+else
+    echo "FAILURE: Rsync encountered errors. Check $LOG_FILE"
+fi
+
+# Cleanup
+# rm -rf "$SOURCE_DIR" "$DEST_DIR"
