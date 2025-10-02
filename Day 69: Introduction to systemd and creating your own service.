@@ -1,0 +1,21 @@
+[Unit]
+Description=Custom Service Logger
+After=network.target
+
+[Service]
+# Type=simple means the process is the main process of the service.
+Type=simple
+# User and Group to run the service as (good security practice)
+User=root
+Group=root
+# The command to execute (the full path to the script)
+ExecStart=/opt/myservice/status_logger.sh
+# Restart=always ensures Systemd restarts the service if it crashes
+Restart=always
+# Standard output/error should be logged by systemd journal
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+# This defines the service should start when the system reaches the multi-user state.
+WantedBy=multi-user.target
