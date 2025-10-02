@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# --- Configuration Variables ---
+ADMIN_EMAIL="your_admin_email@example.com"
+DISK_THRESHOLD=90  # Percentage
+MEM_THRESHOLD=85   # Percentage
+HOSTNAME=$(hostname)
+ALERT_FLAG=0       # 0 = No Alert, 1 = Alert
+
+# --- Function to Send Email ---
+send_alert() {
+    local SUBJECT="$1"
+    local MESSAGE="$2"
+    echo -e "$MESSAGE" | mail -s "$SUBJECT" "$ADMIN_EMAIL"
+    echo "--- ALERT SENT: $SUBJECT ---"
+}
+
+# --- 1. Check Disk Usage ---
+# Get the usage percentage of the root partition (/)
+DISK_USAGE=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%//')
+
+if [ "$DISK_USAGE" -gt "$DISK_THRESHOLD" ]; then
+    ALERT_FLAG=1
+    ALERT_SUBJECT="CRITICAL ALERT: $HOSTNAME Disk Usage High ($DISK_USAGE%)"
+    ALERT_MESSAGE="The disk usage on $HOSTNAME is $DISK_USAGE%. Threshold is $DISK_THRESHOLD%.\n\nFull disk details:\n$(df -h)"
+    send_alert "$ALERT_SUBJECT" "$ALERT_MESSAGE"
+fi
+
+# --- 2. Check Memory Usage ---
+# Get total used and total memory in KB, then calculate percentage
+MEM_INFO=$(free | awk 'NR==2')
+TOTAL_MEM=$(echo "$MEM_INFO" | awk '{print $2}')
+USED_MEM=$(echo "$MEM_INFO" | awk '{print $3}')
+MEM_USAGE=$(( $USED_MEM * 100 / $TOTAL_MEM ))
+
+if [ "$MEM_USAGE" -gt "$MEM_THRESHOLD" ]; then
+    ALERT_FLAG=1
+    ALERT_SUBJECT="ALERT: $HOSTNAME Memory Usage High ($MEM_USAGE%)"
+    ALERT_MESSAGE="The memory usage on $HOSTNAME is $MEM_USAGE%. Threshold is $MEM_THRESHOLD%.\n\nFull memory details:\n$(free -h)"
+    send_alert "$ALERT_SUBJECT" "$ALERT_MESSAGE"
+fi
+
+# --- Final Status ---
+if [ "$ALERT_FLAG" -eq 0 ]; then
+    echo "System check passed. All resources within limits."
+fi
