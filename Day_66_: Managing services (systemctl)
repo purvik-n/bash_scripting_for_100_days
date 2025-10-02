@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# --- Configuration ---
+# Use a common service for testing, like Nginx, Apache2, or SSH
+SERVICE_NAME="nginx" 
+
+# --- Function to Perform Service Action ---
+manage_service() {
+    local action=$1
+    local service=$2
+
+    echo "Attempting to $action service: $service..."
+
+    # Check if the service file exists before trying to manage it
+    if ! systemctl status "$service" &> /dev/null; then
+        echo "ERROR: Service '$service' does not appear to be installed or known to systemd."
+        return 1
+    fi
+    
+    # Run the systemctl command
+    sudo systemctl "$action" "$service" 
+    local exit_status=$?
+
+    if [ "$action" == "status" ]; then
+        # Status command often returns 0 for 'active' and 3/4 for 'inactive/dead'.
+        # We need to manually interpret the output for clarity.
+        echo "--- Status Report for $service ---"
+        systemctl status "$service" | head -n 4
+    elif [ $exit_status -eq 0 ]; then
+        echo "SUCCESS: $service has been $action successfully."
+    else
+        echo "FAILURE: Could not $action $service. Exit code: $exit_status"
+    fi
+    return $exit_status
+}
+
+# --- Main Execution ---
+
+# 1. Check status (should be inactive if not running)
+manage_service status $SERVICE_NAME
+
+# 2. Start the service
+manage_service start $SERVICE_NAME
+
+# 3. Check status (should be active)
+manage_service status $SERVICE_NAME
+
+# 4. Restart the service (useful after configuration changes)
+manage_service restart $SERVICE_NAME
+
+# 5. Stop the service
+manage_service stop $SERVICE_NAME
+
+# 6. Check final status (should be inactive)
+manage_service status $SERVICE_NAME
