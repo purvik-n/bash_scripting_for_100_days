@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# --- Configuration ---
+SOURCE_EXT="jpg"
+TARGET_EXT="png"
+
+# Check if the 'convert' command exists (part of ImageMagick)
+if ! command -v convert &> /dev/null; then
+    echo "ERROR: ImageMagick 'convert' tool not found."
+    echo "Please install it (e.g., sudo apt install imagemagick)."
+    exit 1
+fi
+
+echo "--- Starting $SOURCE_EXT to $TARGET_EXT Conversion ---"
+
+# Use find to handle filenames with spaces correctly, piping into a while read loop
+find . -maxdepth 1 -type f -iname "*.${SOURCE_EXT}" -print0 | while IFS= read -r -d $'\0' source_file; do
+
+    # Use parameter expansion to strip the extension for the new name
+    # ${source_file%.*} removes the shortest suffix matching '.*'
+    BASE_NAME=${source_file%.*}
+
+    TARGET_FILE="${BASE_NAME}.${TARGET_EXT}"
+    
+    echo "Converting $source_file to $TARGET_FILE..."
+    
+    # Execute the conversion
+    convert "$source_file" "$TARGET_FILE"
+    
+    if [ $? -eq 0 ]; then
+        echo "  [SUCCESS]"
+        # Uncomment the line below to delete the original JPG files after successful conversion
+        # rm "$source_file"
+    else
+        echo "  [FAILURE] Conversion failed for $source_file."
+    fi
+
+done
+
+echo "--- Conversion Finished ---"
