@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# --- Configuration ---
+LOG_FILE="/tmp/access.log"
+REPORT_FILE="log_report_$(date +%Y%m%d).html"
+TITLE="Web Access Log Report"
+
+# --- Setup: Create a simulated log file ---
+cat << EOF > "$LOG_FILE"
+10.0.0.1 - - [10/Nov/2024:10:00:01 +0000] "GET /index.html HTTP/1.1" 200 1024
+192.168.1.5 - - [10/Nov/2024:10:00:05 +0000] "GET /admin HTTP/1.1" 404 500
+10.0.0.1 - - [10/Nov/2024:10:00:10 +0000] "GET /images/logo.png HTTP/1.1" 200 5000
+172.16.0.2 - - [10/Nov/2024:10:00:15 +0000] "POST /login HTTP/1.1" 200 1500
+192.168.1.5 - - [10/Nov/2024:10:00:20 +0000] "GET /robots.txt HTTP/1.1" 403 200
+EOF
+
+# --- Metrics Calculation ---
+TOTAL_REQUESTS=$(wc -l < "$LOG_FILE")
+ERROR_COUNT=$(grep -c ' 40[34] ' "$LOG_FILE") # Count 403/404 errors
+UNIQUE_IPS=$(awk '{print $1}' "$LOG_FILE" | sort | uniq | wc -l)
+
+# --- Start HTML Generation with Here Document ---
+cat << EOF > "$REPORT_FILE"
+<!DOCTYPE html>
+<html>
+<head>
+    <title>$TITLE</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 60%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>$TITLE</h1>
+    <p>Report Generated: $(date)</p>
+
+    <h2>Summary Statistics</h2>
+    <table>
+        <tr><th>Metric</th><th>Value</th></tr>
+        <tr><td>Total Requests</td><td>$TOTAL_REQUESTS</td></tr>
+        <tr><td>Total Errors (40x)</td><td class="error">$ERROR_COUNT</td></tr>
+        <tr><td>Unique IP Addresses</td><td>$UNIQUE_IPS</td></tr>
+    </table>
+
+    <h2>Last 5 Requests (Full Log)</h2>
+    <table>
+        <tr><th>Timestamp</th><th>IP Address</th><th>Request</th><th>Status</th></tr>
+EOF
+
+# --- Dynamic Table Row Generation ---
+# This loop parses the log and generates the table rows
+tail -n 5 "$LOG_FILE" | awk '{print $4, $1, $6, $9}' | while read -r TIMESTAMP IP METHOD_PATH STATUS; do
+    # Remove brackets from timestamp and format status
+    FORMATTED_STATUS=$STATUS
+    if [[ "$STATUS" =~ ^4[0-9]{2}$ ]]; then
+        STATUS_CLASS="error"
+    else
+        STATUS_CLASS=""
+    fi
+    
+    # Print the table row
+    echo "<tr><td>$TIMESTAMP</td><td>$IP</td><td>$METHOD_PATH</td><td class=\"$STATUS_CLASS\">$FORMATTED_STATUS</td></tr>" >> "$REPORT_FILE"
+
+done
+
+# --- Close HTML ---
+cat << EOF >> "$REPORT_FILE"
+    </table>
+</body>
+</html>
+EOF
+
+echo "--- Report successfully created: $REPORT_FILE ---"
+rm "$LOG_FILE"
