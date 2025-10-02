@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# --- Configuration ---
+BACKUP_SOURCE="/var/log/"           # Local directory to backup (change to your path)
+REMOTE_USER="backupuser"           # Username on the remote server
+REMOTE_HOST="192.168.1.100"         # IP or Hostname of the remote server
+REMOTE_DEST_DIR="/backups/logs/"   # Destination path on the remote server
+LOG_FILE="/tmp/backup_log_$(date +%Y%m%d).log"
+
+# SSH port if it's not the default (22)
+SSH_PORT="22"
+
+# --- Function to Perform Rsync Backup ---
+perform_backup() {
+    echo "--- Starting Backup at $(date) ---" > "$LOG_FILE"
+    
+    # -a: Archive mode (preserves permissions, ownership, timestamps)
+    # -z: Compress data during the transfer
+    # -v: Verbose output (logged to the file)
+    # -e: Specifies the remote shell (using ssh and the port)
+    rsync -azv -e "ssh -p $SSH_PORT" "$BACKUP_SOURCE" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DEST_DIR" >> "$LOG_FILE" 2>&1
+    
+    local rsync_status=$?
+
+    if [ $rsync_status -eq 0 ]; then
+        echo "SUCCESS: Backup completed successfully to $REMOTE_HOST." >> "$LOG_FILE"
+        return 0
+    else
+        echo "ERROR: Backup failed with exit code $rsync_status." >> "$LOG_FILE"
+        return 1
+    fi
+}
+
+# --- Main Execution ---
+perform_backup
+
+if [ $? -eq 0 ]; then
+    echo "Backup successful. Log saved to $LOG_FILE."
+    
+    # Optional: Send log via email for confirmation (requires 'mail' utility)
+    # mail -s "Backup SUCCESS: $(hostname)" admin@example.com < "$LOG_FILE"
+else
+    echo "Backup FAILED. Check log file $LOG_FILE for details."
+    
+    # Optional: Send alert email on failure
+    # mail -s "Backup FAILED: $(hostname)" admin@example.com < "$LOG_FILE"
+fi
