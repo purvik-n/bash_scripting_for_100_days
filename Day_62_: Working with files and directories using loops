@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Define the file extension we are looking for
+FILE_EXTENSION="txt"
+PREFIX="OLD_"
+
+echo "Starting rename process for *.$FILE_EXTENSION files..."
+
+# Use a for loop with a wildcard to iterate over all matching files
+for file in *.$FILE_EXTENSION; do
+    # Check if the item is a regular file (prevents errors if no files match)
+    if [ -f "$file" ]; then
+        
+        NEW_NAME="${PREFIX}${file}"
+        
+        # -v is for verbose output (shows what it did)
+        mv -v "$file" "$NEW_NAME"
+    fi
+done
+
+echo "Renaming complete."
