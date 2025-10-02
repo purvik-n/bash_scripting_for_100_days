@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# --- Color Codes ---
+RED=$(tput setaf 1)
+GREEN=$(tput setaf 2)
+BLUE=$(tput setaf 4)
+BOLD=$(tput bold)
+RESET=$(tput sgr0) # Resets all attributes (color, bold, etc.)
+
+# --- Terminal Setup ---
+tput clear # Clear the entire screen
+COLS=$(tput cols) # Get terminal width
+ROWS=$(tput lines) # Get terminal height
+
+# Calculate the center position (approximate)
+CENTER_ROW=$((ROWS / 2))
+CENTER_COL=$((COLS / 2 - 10)) # Adjust to center the text length
+
+# --- Main Logic ---
+
+tput cup $CENTER_ROW 0 # Move cursor to the middle row, start of column
+echo "${BOLD}${BLUE}--- T P U T   D E M O ---${RESET}"
+tput cup $((CENTER_ROW + 1)) 0 # Move down one row
+
+echo "Starting countdown..."
+
+for i in {5..1}; do
+    tput cup $((CENTER_ROW + 3)) $CENTER_COL # Move cursor to fixed spot
+    
+    # Use green for the counter
+    echo "${GREEN}Remaining: $i ${RESET}"
+    
+    sleep 1
+done
+
+# Final Message
+tput cup $((CENTER_ROW + 5)) 0 # Move cursor down
+echo "${RED}COUNTDOWN COMPLETE!${RESET}"
+echo ""
+
+# Move cursor to the bottom left for final prompt
+tput cup $ROWS 0
