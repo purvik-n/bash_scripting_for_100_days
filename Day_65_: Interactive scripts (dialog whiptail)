@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Check if whiptail is installed
+if ! command -v whiptail &> /dev/null; then
+    echo "Error: whiptail is not installed. Please install it (e.g., sudo apt install whiptail)."
+    exit 1
+fi
+
+# --- Configuration ---
+TITLE="System Management Script"
+BACKTITLE="Day 65 Demo"
+
+# --- Function to Handle Menu Choice ---
+main_menu() {
+    # The whiptail command displays the menu and sends the user's choice to stderr.
+    # We use command substitution ($()) to capture that output.
+    CHOICE=$(whiptail --title "$TITLE" --menu "Choose an action:" 15 60 4 \
+        "1" "Check System Status (uptime/memory)" \
+        "2" "Install a Package (using apt/dnf demo)" \
+        "3" "View Log File" \
+        "Q" "Exit Script" 3>&1 1>&2 2>&3)
+    
+    # Check the exit status of whiptail. 0 = OK (selected), 1 = Cancel/Esc
+    exit_status=$?
+
+    if [ $exit_status -eq 0 ]; then
+        case "$CHOICE" in
+            1) check_status ;;
+            2) install_package ;;
+            3) view_log ;;
+            Q) whiptail --title "Goodbye" --msgbox "Exiting script." 8 40; exit 0 ;;
+            *) whiptail --msgbox "Invalid choice: $CHOICE" 8 40 ;;
+        esac
+    else
+        whiptail --title "Cancelled" --msgbox "Operation cancelled by user. Exiting." 8 40
+        exit 0
+    fi
+}
+
+# --- Action Functions ---
+
+check_status() {
+    STATUS_INFO=$(uptime; free -h | grep "Mem")
+    whiptail --title "System Status" --msgbox "$STATUS_INFO" 10 60
+}
+
+install_package() {
+    # Get user input for the package name
+    PACKAGE_NAME=$(whiptail --title "Package Installation" --inputbox "Enter package name (e.g., 'tree'):" 10 60 "" 3>&1 1>&2 2>&3)
+    
+    if [ $? -eq 0 ] && [ ! -z "$PACKAGE_NAME" ]; then
+        # In a real script, you'd run sudo apt install -y $PACKAGE_NAME
+        whiptail --msgbox "Simulating install of '$PACKAGE_NAME'. (Requires sudo on a real system)." 8 60
+    else
+        whiptail --msgbox "Installation cancelled or package name empty." 8 60
+    fi
+}
+
+view_log() {
+    # Example using the textbox to display file contents
+    whiptail --title "System Log Preview" --textbox /var/log/syslog 20 80
+}
+
+# --- Main Execution Loop ---
+while true; do
+    main_menu
+done
