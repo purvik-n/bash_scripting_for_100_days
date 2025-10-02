@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# --- Configuration Variables ---
+VERBOSE=0
+FILENAME=""
+
+# --- Function to display help ---
+show_help() {
+    echo "Usage: $0 [-h] [-v] [-f FILE]"
+    echo "  -h : Display this help message."
+    echo "  -v : Enable verbose output."
+    echo "  -f FILE : Specify the input file path (required)."
+    exit 0
+}
+
+# --- 1. The getopts loop ---
+# Option string: h and v are simple flags. f: means -f REQUIRES an argument.
+while getopts "hvf:" OPT; do
+    case $OPT in
+        h)
+            # -h option selected
+            show_help
+            ;;
+        v)
+            # -v option selected
+            VERBOSE=1
+            echo "Verbose output enabled."
+            ;;
+        f)
+            # -f option selected, its argument is in OPTARG
+            FILENAME="$OPTARG"
+            ;;
+        \?)
+            # Handles an invalid option (e.g., -z)
+            echo "Error: Invalid option. Use -h for help." >&2
+            exit 1
+            ;;
+        :)
+            # Handles an option requiring an argument, but none was provided (-f)
+            echo "Error: Option -$OPTARG requires an argument." >&2
+            exit 1
+            ;;
+    esac
+done
+
+# --- 2. Post-parsing checks ---
+
+# Check if a filename was provided (it is required)
+if [ -z "$FILENAME" ]; then
+    echo "Error: No filename specified. Use -f." >&2
+    show_help
+fi
+
+# Shift positional parameters so $1 starts after the processed options
+shift $((OPTIND - 1))
+
+# --- 3. Main script logic ---
+
+if [ "$VERBOSE" -eq 1 ]; then
+    echo "Processing file: $FILENAME"
+    echo "Remaining arguments (if any): $@"
+fi
+
+echo "Script complete. Successfully processed $FILENAME."
