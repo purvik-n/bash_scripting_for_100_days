@@ -1,0 +1,123 @@
+#!/bin/bash
+
+# --- Configuration ---
+# Services we want to manage. Adjust this list for your system.
+SERVICES=("nginx" "mariadb" "ssh")
+
+# --- Function to Perform Action ---
+# Takes the action (start/stop/restart/status) and the service name
+perform_action() {
+    local action=$1
+    local service=$2
+
+    echo ""
+    echo "[$action] on $service..."
+    
+    # Check if the service exists before running the command
+    if ! systemctl status "$service" &> /dev/null; then
+        echo "ERROR: Service '$service' is not installed or known to systemd."
+        return 1
+    fi
+
+    if [ "$action" == "status" ]; then
+        # For status, just display the output
+        systemctl status "$service" | head -n 5
+    else
+        # For start/stop/restart, use sudo
+        sudo systemctl "$action" "$service"
+        if [ $? -eq 0 ]; then
+            echo "SUCCESS: $service has been $actioned."
+        else
+            echo "FAILURE: Could not $action $service."
+        fi
+    fi
+    echo "------------------------------------"
+}
+
+# --- Main Menu Function ---
+show_menu() {
+    clear
+    echo "======================================"
+    echo " SYSTEM SERVICE MANAGER"
+    echo "======================================"
+    
+    # 1. Display Current Status of All Services
+    echo "CURRENT STATUS:"
+    for svc in "${SERVICES[@]}"; do
+        # Check status, suppress output, check exit code (0=Active, non-zero=Inactive/Failed)
+        systemctl is-active "$svc" &> /dev/null
+        if [ $? -eq 0 ]; then
+            STATUS="ACTIVE"
+        else
+            STATUS="INACTIVE/FAILED"
+        fi
+        printf "%-10s %s\n" "$svc:" "$STATUS"
+    done
+    echo "------------------------------------"
+    
+    # 2. Display Action Options
+    echo "OPTIONS:"
+    echo " [S] Start a service"
+    echo " [T] Stop a service"
+    echo " [R] Restart a service"
+    echo " [U] Update/Show Status"
+    echo " [Q] Quit"
+    echo "------------------------------------"
+    read -rp "Enter your choice (S/T/R/U/Q): " CHOICE
+    CHOICE=$(echo "$CHOICE" | tr '[:lower:]' '[:upper:]') # Convert input to uppercase
+}
+
+# --- Service Selector Function ---
+select_service() {
+    clear
+    echo "Available Services:"
+    local i=1
+    for svc in "${SERVICES[@]}"; do
+        echo " $i) $svc"
+        i=$((i+1))
+    done
+    
+    read -rp "Enter the number of the service to manage (1, 2, 3...): " SERVICE_NUM
+    
+    # Validate and return the selected service name
+    if [[ "$SERVICE_NUM" =~ ^[0-9]+$ ]] && [ "$SERVICE_NUM" -le ${#SERVICES[@]} ] && [ "$SERVICE_NUM" -gt 0 ]; then
+        SERVICE_NAME=${SERVICES[$SERVICE_NUM-1]}
+    else
+        echo "Invalid service number selected."
+        SERVICE_NAME=""
+    fi
+}
+
+
+# --- Main Loop ---
+while true; do
+    show_menu
+    
+    case "$CHOICE" in
+        S)
+            select_service
+            [ ! -z "$SERVICE_NAME" ] && perform_action start "$SERVICE_NAME"
+            ;;
+        T)
+            select_service
+            [ ! -z "$SERVICE_NAME" ] && perform_action stop "$SERVICE_NAME"
+            ;;
+        R)
+            select_service
+            [ ! -z "$SERVICE_NAME" ] && perform_action restart "$SERVICE_NAME"
+            ;;
+        U)
+            echo "Status updated." # Menu updates status automatically on next loop
+            ;;
+        Q)
+            echo "Exiting Service Manager. Goodbye."
+            exit 0
+            ;;
+        *)
+            echo "Invalid option. Press Enter to continue."
+            ;;
+    esac
+    
+    # Pause before looping to show command output
+    read -n 1 -s -r -p "Press any key to return to the menu..."
+done
