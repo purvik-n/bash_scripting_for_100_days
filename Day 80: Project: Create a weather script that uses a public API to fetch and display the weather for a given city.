@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# --- Configuration ---
+REPO_DIR="/path/to/my/project" # CHANGE THIS to a real local Git repository path
+COMMIT_MESSAGE="Auto-commit from sync script."
+
+# --- Function to check if we are in a git repo ---
+is_git_repo() {
+    git rev-parse --is-inside-work-tree &> /dev/null
+    return $?
+}
+
+echo "Starting synchronization for $REPO_DIR..."
+
+cd "$REPO_DIR" || { echo "ERROR: Cannot change directory to $REPO_DIR"; exit 1; }
+
+if ! is_git_repo; then
+    echo "ERROR: $REPO_DIR is not a Git repository."
+    exit 1
+fi
+
+# 1. Check for local modifications
+if git status --porcelain | grep -q '^\(M\|??\)'; then
+    
+    echo "Changes found. Committing and pushing..."
+
+    # 2. Add all changes
+    git add .
+    
+    # 3. Commit with the predefined message
+    git commit -m "$COMMIT_MESSAGE ($(date +%Y-%m-%d))"
+    
+    # Check if the commit was successful before pushing
+    if [ $? -ne 0 ]; then
+        echo "WARNING: No actual changes to commit, or commit failed."
+        # Attempt a pull anyway in case there's a remote update
+    else
+        # 4. Pull to ensure we are up-to-date before pushing
+        echo "Pulling latest changes..."
+        git pull --rebase 
+        
+        # 5. Push the changes to the remote
+        echo "Pushing changes..."
+        git push
+        
+        if [ $? -eq 0 ]; then
+            echo "SUCCESS: Changes committed and pushed."
+        else
+            echo "FAILURE: Git push failed. Resolve conflicts manually."
+        fi
+    fi
+
+else
+    echo "No uncommitted changes found. Repository is clean."
+fi
+
