@@ -1,0 +1,28 @@
+#!/bin/bash
+
+API_URL="[https://catfact.ninja/fact](https://catfact.ninja/fact)"
+
+echo "Fetching a random cat fact..."
+
+# 1. Use curl to get the data
+JSON_DATA=$(curl -s "$API_URL")
+
+# Check if curl succeeded and returned data
+if [ $? -ne 0 ] || [ -z "$JSON_DATA" ]; then
+    echo "Error: Could not retrieve data from API."
+    exit 1
+fi
+
+# 2. Use jq to parse the JSON and extract the 'fact' field
+# The '.fact' selector points directly to the key we want.
+CAT_FACT=$(echo "$JSON_DATA" | jq -r '.fact')
+
+# 3. Display the results
+if [ -n "$CAT_FACT" ]; then
+    echo "------------------------------------------------"
+    echo "CAT FACT OF THE DAY:"
+    echo "$CAT_FACT"
+    echo "------------------------------------------------"
+else
+    echo "Error: Failed to parse the 'fact' field from the JSON."
+fi
