@@ -1,0 +1,40 @@
+#!/bin/bash
+
+LOG_FILE="/tmp/long_process.log"
+
+echo "--- 1. Launching Process with nohup ---"
+echo "Process started with nohup. It will continue running even if the terminal is closed."
+
+# nohup directs all output to nohup.out unless specified
+nohup bash -c '
+    for i in {1..10}; do
+        echo "nohup job: iteration $i at $(date)" >> "$LOG_FILE"
+        sleep 5
+    done
+    echo "nohup job finished." >> "$LOG_FILE"
+' > /dev/null 2>&1 & # Redirect stdout/stderr and send to background (&)
+
+NOHUP_PID=$!
+echo "  [NOHUP] Process started with PID: $NOHUP_PID"
+
+sleep 2 # Give nohup a moment to start
+
+echo "--- 2. Manually Backgrounding and Disowning ---"
+
+# Start a job in the background (will get a job number like [1])
+(
+    for i in {1..5}; do
+        echo "disown job: iteration $i at $(date)" >> "$LOG_FILE"
+        sleep 2
+    done
+    echo "disown job finished." >> "$LOG_FILE"
+) &
+
+# Immediately use disown to remove it from the job table
+# If you exit the script now, this process will also continue running.
+disown -h
+echo "  [DISOWN] Job removed from shell job table."
+
+echo "Script finished. Check $LOG_FILE for background output."
+echo "Wait a few seconds, then manually run 'tail -f $LOG_FILE' to see the output."
+
