@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# --- Tput Setup ---
+GREEN=$(tput setaf 2)
+YELLOW=$(tput setaf 3)
+BLUE=$(tput setaf 4)
+BOLD=$(tput bold)
+RESET=$(tput sgr0)
+
+# Check for required commands
+if ! command -v tput &> /dev/null; then
+    echo "Error: tput command not found."
+    exit 1
+fi
+
+tput clear # Clear the screen once at the start
+
+echo "${BOLD}${BLUE}  System Status Dashboard (Press Ctrl+C to exit)${RESET}"
+echo "--------------------------------------------------------"
+
+while true; do
+    
+    # Use tput cup to redraw content starting from row 3 (0-indexed)
+    tput cup 3 0 
+    
+    # 1. System Uptime / Load Average
+    echo "${YELLOW}${BOLD}UPTIME AND LOAD:${RESET}"
+    uptime | awk '{print "  Up Time: " $3 $4 | " Load Avg: " $10 $11 $12}' | tr -d ','
+    
+    echo ""
+    
+    # 2. Memory Usage
+    echo "${YELLOW}${BOLD}MEMORY USAGE (RAM):${RESET}"
+    free -h | grep 'Mem' | awk '{print "  Total: "$2 " Used: "$3 " Free: "$4 " (Swap: "$6")"}'
+    
+    echo ""
+    
+    # 3. Disk Usage (Root Partition)
+    echo "${YELLOW}${BOLD}DISK USAGE (/):${RESET}"
+    df -h / | tail -n 1 | awk '{print "  Size: "$2 " Used: "$3 " Avail: "$4 " Used%: "$5}' | sed 's/%/%%/g'
+
+    # Move cursor to the bottom right and show refresh time
+    tput cup $(( $(tput lines) - 1 )) 0
+    echo "${BLUE}Last Updated: $(date '+%H:%M:%S')${RESET}"
+    
+    sleep 3 # Pause for 3 seconds before redrawing
+done
