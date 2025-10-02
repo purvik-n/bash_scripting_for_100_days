@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# --- Configuration ---
+TODO_FILE="$HOME/.todo_list.txt"
+TEMP_FILE="/tmp/todo_temp.txt"
+
+# Ensure the list file exists
+touch "$TODO_FILE"
+
+# --- Function to Add a Task ---
+todo_add() {
+    local task="$1"
+    if [ -z "$task" ]; then
+        echo "Error: Cannot add an empty task."
+        return 1
+    fi
+    echo "[ ] $task" >> "$TODO_FILE"
+    echo "Task added: $task"
+}
+
+# --- Function to List Tasks ---
+todo_list() {
+    echo "--- Your To-Do List ---"
+    # nl: adds line numbers to the output
+    nl -b a -w 2 "$TODO_FILE"
+    echo "-----------------------"
+}
+
+# --- Function to Complete a Task ---
+todo_complete() {
+    local line_num="$1"
+    if ! [[ "$line_num" =~ ^[0-9]+$ ]]; then
+        echo "Error: Please provide a valid number for completion."
+        return 1
+    fi
+
+    # 1. Use sed to replace the first '[ ]' on the specified line with '[X]'
+    # N is the line number provided by the user.
+    # The /! is a negation, ensuring it doesn't accidentally mark an already completed task.
+    sed -i "${line_num}s/\[ \]/\\[X\\]/" "$TODO_FILE"
+    
+    if [ $? -eq 0 ]; then
+        echo "Task $line_num marked as complete."
+    else
+        echo "Error: Failed to complete task $line_num. Check if the line exists."
+    fi
+}
+
+# --- Main Execution (Case Statement) ---
+case "$1" in
+    add)
+        # Shift the first argument ('add') and pass the rest as the task
+        shift
+        todo_add "$*"
+        ;;
+    list)
+        todo_list
+        ;;
+    complete)
+        todo_complete "$2"
+        ;;
+    delete)
+        # Deletes the specified line number using sed
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+            echo "Error: Please provide a valid number to delete."
+        else
+            sed -i "${2}d" "$TODO_FILE"
+            echo "Task $2 deleted."
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {add <task> | list | complete <number> | delete <number>}"
+        todo_list
+        ;;
+esac
