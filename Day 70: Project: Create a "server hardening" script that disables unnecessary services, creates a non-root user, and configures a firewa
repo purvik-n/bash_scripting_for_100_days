@@ -1,0 +1,77 @@
+#!/bin/bash
+
+# --- Configuration ---
+# Services to disable if found (adjust as needed for your base OS)
+# Examples: telnet, ftp, nfs-server
+UNNECESSARY_SERVICES=("telnetd" "postfix" "avahi-daemon") 
+NEW_ADMIN_USER="sysadmin" 
+
+# Check for root privilege
+if [ "$EUID" -ne 0 ]; then
+    echo "ERROR: Please run this script with sudo or as root."
+    exit 1
+fi
+
+echo "--- STARTING SERVER HARDENING SCRIPT ---"
+
+# --- 1. Disable Unnecessary Services ---
+echo "1. Disabling unnecessary services..."
+for svc in "${UNNECESSARY_SERVICES[@]}"; do
+    if systemctl status "$svc" &> /dev/null; then
+        systemctl stop "$svc" 
+        systemctl disable "$svc" 
+        echo "   -> Disabled and stopped: $svc"
+    else
+        echo "   -> Service $svc not found, skipping."
+    fi
+done
+
+# --- 2. Create Non-Root Admin User ---
+echo "2. Creating/verifying administrative user: $NEW_ADMIN_USER"
+if ! id "$NEW_ADMIN_USER" &> /dev/null; then
+    # Create user with a locked password initially
+    useradd -m -s /bin/bash "$NEW_ADMIN_USER"
+    # Set initial password (PROMPT REQUIRED!)
+    echo "SET PASSWORD for $NEW_ADMIN_USER NOW:"
+    passwd "$NEW_ADMIN_USER"
+    echo "   -> User $NEW_ADMIN_USER created."
+fi
+
+# Add user to the sudo group (Ubuntu/Debian) or wheel group (RHEL/CentOS)
+usermod -aG sudo "$NEW_ADMIN_USER"
+echo "   -> User $NEW_ADMIN_USER added to 'sudo' group for admin rights."
+# Optional: Lock root login via SSH (best done manually or in a dedicated SSH config script)
+
+# --- 3. Configure Firewall (UFW) ---
+echo "3. Configuring UFW Firewall..."
+
+# Check and install ufw if necessary (Ubuntu/Debian specific)
+if ! command -v ufw &> /dev/null; then
+    echo "   Installing UFW..."
+    apt update && apt install ufw -y
+fi
+
+# Set default policies to deny everything
+ufw default deny incoming
+ufw default allow outgoing
+echo "   -> Default policy set: DENY incoming, ALLOW outgoing."
+
+# Allow essential services
+ufw allow ssh
+ufw allow http
+ufw allow https
+echo "   -> Allowed SSH (22), HTTP (80), HTTPS (443)."
+
+# Enable the firewall
+if ufw status | grep -q "inactive"; then
+    echo "   Enabling UFW now..."
+    ufw enable <<< "y" # Passes 'y' to the interactive prompt
+else
+    echo "   UFW is already active."
+fi
+
+echo "UFW Status:"
+ufw status verbose | grep "Status:\|Default:\|To"
+
+echo "--- SERVER HARDENING COMPLETE ---"
+echo "RECOMMENDATION: Logout and log back in as user '$NEW_ADMIN_USER'."
