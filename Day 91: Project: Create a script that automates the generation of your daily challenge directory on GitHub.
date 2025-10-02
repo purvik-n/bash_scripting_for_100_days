@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# --- Configuration ---
+REPO_ROOT="$HOME/100-day-bash-challenge"
+DAY_NUMBER="91" # Update this manually or use math: $((LAST_DAY + 1))
+TOPIC="Automated Challenge Directory Setup"
+FOLDER_NAME="Day-$DAY_NUMBER-$TOPIC"
+
+# --- Function to Check Status ---
+check_status() {
+    if [ $? -ne 0 ]; then
+        echo "ERROR: $1 failed. Aborting Git operations."
+        exit 1
+    fi
+}
+
+# --- Main Execution ---
+echo "Starting setup for Day $DAY_NUMBER..."
+
+# 1. Change to Repository Root
+cd "$REPO_ROOT" || { echo "ERROR: Repository directory $REPO_ROOT not found."; exit 1; }
+
+# 2. Create the new directory
+if [ -d "$FOLDER_NAME" ]; then
+    echo "Directory '$FOLDER_NAME' already exists. Skipping creation."
+else
+    mkdir -p "$FOLDER_NAME"
+    check_status "Directory creation"
+    echo "Created directory: $FOLDER_NAME"
+
+    # 3. Create boilerplate README.md
+    cat << EOF > "$FOLDER_NAME/README.md"
+# Day $DAY_NUMBER: $TOPIC
+
+**Date:** $(date "+%Y-%m-%d")
+
+## Challenge Goal:
+* Write a script that automates the daily setup process.
+
+## The Script: \`daily_setup.sh\`
+\`\`\`bash
+# Insert your Bash script code here
+\`\`\`
+EOF
+    echo "Created README.md boilerplate."
+fi
+
+# 4. Git Operations
+echo "Staging, committing, and pushing changes..."
+git add "$FOLDER_NAME"
+check_status "Git Add"
+
+COMMIT_MESSAGE="Day $DAY_NUMBER: Add new challenge directory and README."
+git commit -m "$COMMIT_MESSAGE"
+# Check status of commit. If nothing to commit, we skip the push.
+if [ $? -ne 0 ]; then
+    echo "INFO: No new changes to commit. Repository is clean."
+else
+    # Push changes
+    git push origin main
+    check_status "Git Push"
+    echo "SUCCESS: Changes pushed to GitHub."
+fi
